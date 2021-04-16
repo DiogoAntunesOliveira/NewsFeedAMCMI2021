@@ -7,6 +7,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import ipca.example.newsfeed.R.id.textViewTitle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -25,30 +29,58 @@ class MainActivity : AppCompatActivity() {
         posts.add(Post("Má noticia", "esta é mesmo uma má noticia", null, null))
         posts.add(Post("Má noticia", "esta é mesmo uma má noticia", null, null))
 
+        for (p in posts) {
+            println(p)
+        }
+
         val listViewPosts = findViewById<ListView>(R.id.listViewPosts)
         val postsAdapter = PostsAdapter()
         listViewPosts.adapter = postsAdapter
 
-        val urlc : HttpURLConnection =
-                URL("https://newsapi.org/v2/top-headlines?country=pt&category=business&apiKey=")
-                        .openConnection() as HttpURLConnection
-        urlc.connect()
-        val stream = urlc.inputStream
-        val isReader = InputStreamReader(stream)
-        val brin  = BufferedReader(isReader)
-        var str : String = ""
 
-        var keepReading = true
-        while(keepReading) {
-            val line = brin.readLine()
-            if (line == null){
-                keepReading = false
-            }else {
-                str += line
+        GlobalScope.launch(Dispatchers.IO) {
+            val urlc : HttpURLConnection =
+                    URL("https://newsapi.org/v2/top-headlines?country=pt&category=business&apiKey=1765f87e4ebc40229e80fd0f75b6416c")
+                            .openConnection() as HttpURLConnection
+            urlc.setRequestProperty("User-Agent","Test")
+            urlc.setRequestProperty("Connection","close")
+            urlc.connectTimeout = 1500
+            urlc.connect()
+            val stream = urlc.inputStream
+            val isReader = InputStreamReader(stream)
+            val brin  = BufferedReader(isReader)
+            var str : String = ""
+
+            var keepReading = true
+            while(keepReading) {
+                val line = brin.readLine()
+                if (line == null){
+                    keepReading = false
+                }else {
+                    str += line
+                }
             }
+
+
+            val jsonObject = JSONObject(str)
+            if (jsonObject.get("status").equals("ok")) {
+
+                val jsonArrayArticles = jsonObject.getJSONArray("articles")
+                for ( index in  0 until jsonArrayArticles.length()) {
+                    val jsonArticle : JSONObject = jsonArrayArticles.get(index) as JSONObject
+                    val post = Post.fromJson(jsonArticle)
+                    posts.add(post)
+                }
+            }
+
+            GlobalScope.launch (Dispatchers.Main){
+                postsAdapter.notifyDataSetChanged()
+            }
+
+            //println(str)
         }
 
-        println(str)
+
 
 
     }
