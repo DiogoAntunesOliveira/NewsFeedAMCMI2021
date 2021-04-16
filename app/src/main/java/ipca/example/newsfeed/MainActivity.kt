@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
 
         GlobalScope.launch(Dispatchers.IO) {
             val urlc : HttpURLConnection =
-                    URL("https://newsapi.org/v2/top-headlines?country=pt&category=business&apiKey=1765f87e4ebc40229e80fd0f75b6416c")
+                    URL("https://newsapi.org/v2/top-headlines?country=pt&category=business&apiKey=")
                             .openConnection() as HttpURLConnection
             urlc.setRequestProperty("User-Agent","Test")
             urlc.setRequestProperty("Connection","close")
